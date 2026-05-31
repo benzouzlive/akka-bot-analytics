@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Akka Bot Analytics — May 22–29 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
+body{background:#f9f9f9;color:#111;padding:2rem}
+.dash{max-width:900px;margin:0 auto;padding-bottom:3rem}
+.section-title{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:12px;margin-top:1.5rem}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem}
+.metric{background:#fff;border-radius:8px;padding:.85rem 1rem;border:.5px solid #e0e0e0}
+.metric-label{font-size:12px;color:#666;margin-bottom:4px;line-height:1.3}
+.metric-value{font-size:22px;font-weight:500;color:#111}
+.metric-sub{font-size:11px;color:#888;margin-top:2px}
+.metric.quality-good .metric-value{color:#0F6E56}
+.metric.quality-warn .metric-value{color:#BA7517}
+.metric.quality-info .metric-value{color:#534AB7}
+.metric.vs-up{border-left:3px solid #1D9E75}
+.metric.vs-down{border-left:3px solid #D85A30}
+.metric.vs-flat{border-left:3px solid #888}
+.vs-tag{font-size:10px;font-weight:500;margin-top:3px}
+.vs-up .vs-tag{color:#1D9E75}
+.vs-down .vs-tag{color:#D85A30}
+.vs-flat .vs-tag{color:#888}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1rem}
+.card{background:#fff;border:.5px solid #e0e0e0;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.chart-title{font-size:13px;font-weight:500;color:#111;margin-bottom:4px}
+.chart-note{font-size:11px;color:#888;margin-bottom:10px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:11px;color:#666}
+.legend span{display:flex;align-items:center;gap:4px}
+.ldot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.topic-table{display:grid;grid-template-columns:200px 1fr 120px;gap:0;align-items:center}
+.bar-wrap{width:100%;height:7px;background:#f0f0f0;border-radius:4px;overflow:hidden}
+.bar{height:100%;border-radius:4px}
+.expand-list{display:flex;flex-direction:column;gap:6px}
+.expand-row{border-radius:8px;overflow:hidden;border:.5px solid #e0e0e0}
+.expand-header{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;cursor:pointer;background:#f5f5f5;transition:background .15s;user-select:none}
+.expand-header:hover{background:#ececec}
+.badge{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.berr{background:#FCEBEB;color:#A32D2D}
+.bmiss{background:#E1F5EE;color:#0F6E56}
+.bwarn{background:#FAEEDA;color:#854F0B}
+.bsec{background:#EEEDFE;color:#534AB7}
+.expand-text{flex:1;font-size:13px;color:#111;line-height:1.4}
+.expand-count{font-size:11px;color:#888;white-space:nowrap;padding-left:6px;flex-shrink:0}
+.expand-chevron{font-size:12px;color:#888;flex-shrink:0;transition:transform .2s;margin-top:2px;margin-left:4px}
+.expand-row.open .expand-chevron{transform:rotate(180deg)}
+.expand-body{display:none;padding:12px 14px;background:#fff;border-top:.5px solid #e0e0e0}
+.expand-row.open .expand-body{display:block}
+.excerpt{margin-bottom:8px;padding:8px 10px;background:#f5f5f5;border-radius:6px;font-size:12px;line-height:1.5;color:#555}
+.excerpt:last-child{margin-bottom:0}
+.exc-label{font-size:10px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.convo-list{display:flex;flex-direction:column;gap:8px}
+.convo-row{border-radius:8px;overflow:hidden;border:.5px solid #e0e0e0}
+.convo-header{display:flex;flex-direction:column;gap:4px;padding:10px 14px;cursor:pointer;background:#f5f5f5;transition:background .15s}
+.convo-header:hover{background:#ececec}
+.convo-meta{font-size:11px;color:#888;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.convo-title{font-size:13px;font-weight:500;color:#111}
+.convo-summary{font-size:12px;color:#666;line-height:1.4}
+.convo-body{display:none;padding:12px 14px;background:#fff;border-top:.5px solid #e0e0e0}
+.convo-row.open .convo-body{display:block}
+.convo-row.open .convo-chevron{transform:rotate(180deg)}
+.convo-chevron{transition:transform .2s;font-size:12px;color:#888;margin-left:auto;flex-shrink:0}
+.msg-thread{display:flex;flex-direction:column;gap:6px}
+.msg{padding:7px 10px;border-radius:6px;font-size:12px;line-height:1.5}
+.msg-user{background:#EEEDFE;color:#3C3489;max-width:85%}
+.msg-bot{background:#f5f5f5;color:#555;max-width:90%}
+.msg-role{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;opacity:.7}
+.stars{color:#BA7517;font-size:12px}
+.tag{background:#fff;border:.5px solid #e0e0e0;padding:1px 6px;border-radius:3px;font-size:10px;color:#666}
+.pbadge{display:inline-block;font-size:11px;padding:2px 8px;background:#f5f5f5;border:.5px solid #e0e0e0;border-radius:4px;color:#666;margin-left:8px;vertical-align:middle}
+.users-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:1rem}
+.user-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#f5f5f5;border-radius:8px}
+.hint{font-size:11px;color:#888;margin-top:10px}
+.alert-box{padding:10px 14px;border-radius:6px;font-size:12px;line-height:1.5;margin-top:10px}
+.alert-warn{background:#FFF8F0;border-left:3px solid #D85A30;color:#555}
+.alert-good{background:#F0FAF6;border-left:3px solid #1D9E75;color:#555}
+</style>
+</head>
+<body>
+<div class="dash">
+
+<div style="margin-bottom:1.5rem">
+  <div style="font-size:18px;font-weight:500;color:#111">Bot analytics <span class="pbadge">May 22–29, 2026</span></div>
+  <div style="font-size:13px;color:#666;margin-top:3px">8 days · 3 languages · 656 user messages · 182 conversations · <span style="color:#534AB7;font-weight:500">vs. week of May 18–21 (4 days)</span></div>
+</div>
+
+<div class="section-title">Adoption & Usage</div>
+<div class="metric-grid">
+  <div class="metric vs-down"><div class="metric-label">Opened the chat</div><div class="metric-value">423</div><div class="metric-sub">loaded the bot</div><div class="vs-tag">↓ vs 514 prev week</div></div>
+  <div class="metric vs-flat"><div class="metric-label">Sent ≥1 message</div><div class="metric-value">170</div><div class="metric-sub">40% of openings</div><div class="vs-tag">→ vs 172 (33%) prev week</div></div>
+  <div class="metric vs-up"><div class="metric-label">User messages</div><div class="metric-value">656</div><div class="metric-sub">excluding injected prompts</div><div class="vs-tag">↑ vs 586 prev week (8d vs 4d)</div></div>
+  <div class="metric vs-up"><div class="metric-label">Active conversations</div><div class="metric-value">182</div><div class="metric-sub">with ≥1 real message</div><div class="vs-tag">↑ vs 163 prev week</div></div>
+  <div class="metric vs-flat"><div class="metric-label">Avg msgs / active user</div><div class="metric-value">3.9</div><div class="metric-sub">max 30 msgs (Ana)</div><div class="vs-tag">→ vs 4.0 prev week</div></div>
+  <div class="metric vs-up"><div class="metric-label">Highly engaged (5+ msgs)</div><div class="metric-value">47</div><div class="metric-sub">28% of active users</div><div class="vs-tag">↑ vs 40 (23%) prev week</div></div>
+</div>
+
+<div class="section-title">Response Quality — Proxy Signals</div>
+<div style="font-size:11px;color:#888;margin-bottom:10px">Behavioural signals — no explicit feedback. Track week over week.</div>
+<div class="metric-grid">
+  <div class="metric quality-good vs-up"><div class="metric-label">Positive conversation endings</div><div class="metric-value">25</div><div class="metric-sub">14% · thanks, perfecto, grazie…</div><div class="vs-tag">↑ vs 16 (10%) prev week</div></div>
+  <div class="metric quality-warn vs-down"><div class="metric-label">Bot hit a limitation</div><div class="metric-value">71</div><div class="metric-sub">39% · "can't", "no tengo", "non posso"…</div><div class="vs-tag">↑ vs 55 (34%) prev week</div></div>
+  <div class="metric quality-warn vs-up"><div class="metric-label">Support escalations</div><div class="metric-value">1</div><div class="metric-sub">1% · user asked for email / ticket</div><div class="vs-tag">↓ vs 7 (4%) prev week ✅</div></div>
+  <div class="metric quality-good vs-up"><div class="metric-label">Frustration signals</div><div class="metric-value">1</div><div class="metric-sub">1% · "no funciona", "si blocca"…</div><div class="vs-tag">↓ vs 3 (2%) prev week ✅</div></div>
+  <div class="metric quality-info vs-up"><div class="metric-label">Injection attempts</div><div class="metric-value">0</div><div class="metric-sub">0% · prompt / .env extraction</div><div class="vs-tag">↓ vs 5 (3%) prev week ✅</div></div>
+  <div class="metric quality-warn vs-flat"><div class="metric-label">One-shot (1 message only)</div><div class="metric-value">49</div><div class="metric-sub">27% · opened, 1 msg, left</div><div class="vs-tag">→ vs 53 (33%) prev week</div></div>
+</div>
+
+<div class="chart-row">
+  <div class="card" style="margin-bottom:0">
+    <div class="chart-title">User messages per day</div>
+    <div class="chart-note">Number of messages sent by members each day</div>
+    <div style="position:relative;height:155px"><canvas id="dayChart"></canvas></div>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="chart-title">Languages</div>
+    <div class="legend">
+      <span><span class="ldot" style="background:#534AB7"></span>IT 45%</span>
+      <span><span class="ldot" style="background:#1D9E75"></span>ES 41%</span>
+      <span><span class="ldot" style="background:#D85A30"></span>EN 15%</span>
+    </div>
+    <div style="position:relative;height:140px"><canvas id="langChart"></canvas></div>
+  </div>
+</div>
+<div class="card">
+  <div class="chart-title">Activity by hour (UTC)</div>
+  <div class="chart-note">Peak at 17:00 UTC = 18–19h ES/IT time — post-work slot, consistent with last week</div>
+  <div style="position:relative;height:130px"><canvas id="hourChart"></canvas></div>
+</div>
+<div class="card">
+  <div class="chart-title">Engagement distribution</div>
+  <div class="chart-note">Number of messages sent per active user</div>
+  <div style="position:relative;height:120px"><canvas id="engChart"></canvas></div>
+</div>
+
+<div class="section-title">Top Active Users</div>
+<div class="users-grid">
+  <div class="user-row"><div style="width:32px;height:32px;border-radius:50%;background:#EEEDFE;color:#534AB7;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">AN</div><div><div style="font-size:13px;font-weight:500">Ana</div><div style="font-size:11px;color:#666">30 msgs · ES</div><div style="font-size:10px;color:#999;font-family:monospace">#6490</div></div></div>
+  <div class="user-row"><div style="width:32px;height:32px;border-radius:50%;background:#E1F5EE;color:#0F6E56;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">FR</div><div><div style="font-size:13px;font-weight:500">Francisco</div><div style="font-size:11px;color:#666">24 msgs · ES</div><div style="font-size:10px;color:#999;font-family:monospace">#116</div></div></div>
+  <div class="user-row"><div style="width:32px;height:32px;border-radius:50%;background:#FAECE7;color:#993C1D;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">ÁL</div><div><div style="font-size:13px;font-weight:500">Álvaro</div><div style="font-size:11px;color:#666">18 msgs · ES</div><div style="font-size:10px;color:#999;font-family:monospace">#530</div></div></div>
+  <div class="user-row"><div style="width:32px;height:32px;border-radius:50%;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">LO</div><div><div style="font-size:13px;font-weight:500">Lorenzo</div><div style="font-size:11px;color:#666">16 msgs · IT</div><div style="font-size:10px;color:#999;font-family:monospace">#5430</div></div></div>
+  <div class="user-row"><div style="width:32px;height:32px;border-radius:50%;background:#EEEDFE;color:#534AB7;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">TH</div><div><div style="font-size:13px;font-weight:500">Thomas</div><div style="font-size:11px;color:#666">15 msgs · EN</div><div style="font-size:10px;color:#999;font-family:monospace">#9915</div></div></div>
+  <div class="user-row"><div style="width:32px;height:32px;border-radius:50%;background:#E1F5EE;color:#0F6E56;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">AL</div><div><div style="font-size:13px;font-weight:500">Alessandro</div><div style="font-size:11px;color:#666">14 msgs · IT</div><div style="font-size:10px;color:#999;font-family:monospace">#38142</div></div></div>
+  <div class="user-row"><div style="width:32px;height:32px;border-radius:50%;background:#FAECE7;color:#993C1D;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">FC</div><div><div style="font-size:13px;font-weight:500">Francesco</div><div style="font-size:11px;color:#666">14 msgs · IT</div><div style="font-size:10px;color:#999;font-family:monospace">#15567</div></div></div>
+  <div class="user-row"><div style="width:32px;height:32px;border-radius:50%;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">JO</div><div><div style="font-size:13px;font-weight:500">Jordina</div><div style="font-size:11px;color:#666">11 msgs · ES</div><div style="font-size:10px;color:#999;font-family:monospace">#38320</div></div></div>
+</div>
+
+<div class="section-title">Main Topics</div>
+<div class="card">
+  <div class="topic-table">
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0;white-space:nowrap">Portfolio tracking</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:26%;background:#534AB7"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px;white-space:nowrap">26% ↑ vs 24%</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">Investment status, valuations, exit timing, performance ranking</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0;white-space:nowrap">Fideum deal</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:22%;background:#1D9E75"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px;white-space:nowrap">22% ↑ vs 16%</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">Still active — valuation, MiCA, business model, token, Lemonway integration</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0;white-space:nowrap">Taxation & fiscal</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:18%;background:#D85A30"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px;white-space:nowrap">18% ↓ vs 28%</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">Capital gains, quadro RW, Spain/Italy/Ireland — still top 3 but less dominant</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0;white-space:nowrap">Membership & plans</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:14%;background:#185FA5"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px;white-space:nowrap">14% ↑ vs 10%</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">Referral programme, Elite circle, upgrade, pricing, Free Forever conditions</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0;white-space:nowrap">Exits & liquidity</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:11%;background:#BA7517"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px;white-space:nowrap">11% → vs 13%</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">Exit timelines, Anthropic exit, SpaceX, secondary market</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0;white-space:nowrap">Platform & ops</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:6%;background:#993556"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px;white-space:nowrap">6% new</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">Wallet top-up, Lemonway safety, wire transfer reference, KYC</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0;white-space:nowrap">News & ecosystem</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:3%;background:#888780"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px;white-space:nowrap">3% ↓ vs 6%</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 8px 0;grid-column:1">VC news, SpaceX, Fintower report</div>
+    <div></div><div></div>
+  </div>
+  <div class="hint">Based on 656 messages analysed · May 22–29, 2026</div>
+</div>
+
+<div class="section-title">Current Deal Deep-Dive — Fideum (45 real questions)</div>
+<div class="card">
+  <div style="font-size:13px;color:#555;margin-bottom:14px;line-height:1.5">Fideum remained the active deal this week. Volume up vs last week (+15 questions). New angle: members now questioning Lemonway safety and Fideum integration into the Akka app itself.</div>
+  <div class="topic-table">
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0">General overview</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:29%;background:#534AB7"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px">29% · ✅ well handled</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">"What does Fideum do?", "Ca fait quoi Fideum?", "Dimmi di più su Fideum" — bot has full context</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0">Investment risk & conviction</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:22%;background:#1D9E75"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px">22% · ✅ mostly good</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">"Dime cual es la etapa de entrada de Akka", "How much is Fideum raising?", risk breakdowns</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0">Lemonway / banking safety 🆕</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:18%;background:#D85A30"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#BA7517;text-align:right;padding:5px 0 2px">18% · ⚠️ partial</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">"La banca è Lemonway?", "Se Lemonway fallisce?" — bot explains Lemonway role but struggles with deposit guarantee specifics</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0">Akka + Fideum integration 🆕</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:13%;background:#185FA5"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#BA7517;text-align:right;padding:5px 0 2px">13% · ⚠️ partial</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">"Et si Akka pluggait Fideum sur l'app?", "Si el banco decide dejar ese servicio?" — speculative questions bot can't confirm</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0">Token & business model</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:11%;background:#BA7517"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#666;text-align:right;padding:5px 0 2px">11% · ✅ good this week</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 10px 0;grid-column:1">Token questions dropped — bot's MiCA explanations seem to be landing</div>
+    <div></div><div></div>
+
+    <div style="font-size:13px;font-weight:500;color:#111;padding:5px 16px 2px 0">Valuation & deal terms</div>
+    <div style="padding:5px 12px 2px 0;display:flex;align-items:center"><div class="bar-wrap"><div class="bar" style="width:7%;background:#993556"></div></div></div>
+    <div style="font-size:12px;font-weight:500;color:#1D9E75;text-align:right;padding:5px 0 2px">7% · ✅ improved</div>
+    <div style="font-size:11px;color:#888;padding:0 16px 8px 0;grid-column:1">Fewer valuation inconsistency issues vs last week — appears to have been fixed</div>
+    <div></div><div></div>
+  </div>
+  <div class="alert-good" style="margin-top:10px"><strong>Improvement vs last week:</strong> Valuation inconsistency (€70M/€45M/€40M confusion) seems resolved — fewer mentions this week. Token questions also down.</div>
+  <div class="alert-warn" style="margin-top:8px"><strong>New issue to watch:</strong> Lemonway safety questions are up — members are worried about fund protection if Lemonway fails. Bot needs clearer content on deposit guarantees and fund segregation.</div>
+</div>
+
+<div class="section-title">Issues & Friction — click to expand</div>
+<div class="expand-list" id="bugs-list"></div>
+
+<div class="section-title">Top Conversations — click to read</div>
+<div class="convo-list" id="convo-list"></div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const txt='rgba(0,0,0,.35)',grid='rgba(0,0,0,.05)';
+const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+
+new Chart('dayChart',{type:'bar',data:{labels:['May 22','May 23','May 24','May 25','May 26','May 27','May 28','May 29'],datasets:[{data:[106,61,101,50,82,81,93,82],backgroundColor:'#7F77DD',borderRadius:4}]},options:{...base,scales:{x:{ticks:{color:txt,font:{size:11}},grid:{display:false},border:{display:false}},y:{ticks:{color:txt,font:{size:11}},grid:{color:grid},border:{display:false}}}}});
+new Chart('langChart',{type:'doughnut',data:{labels:['IT','ES','EN'],datasets:[{data:[195,177,67],backgroundColor:['#534AB7','#1D9E75','#D85A30'],borderWidth:0}]},options:{...base,cutout:'62%'}});
+const h={0:25,3:1,4:7,5:7,6:28,7:36,8:42,9:21,10:34,11:16,12:35,13:31,14:32,15:47,16:38,17:69,18:59,19:30,20:32,21:32,22:21,23:13};
+const hl=Array.from({length:24},(_,i)=>i+'h'),hd=hl.map((_,i)=>h[i]||0);
+new Chart('hourChart',{type:'bar',data:{labels:hl,datasets:[{data:hd,backgroundColor:hd.map(v=>v===69?'#534AB7':'#AFA9EC'),borderRadius:3}]},options:{...base,scales:{x:{ticks:{color:txt,font:{size:10},autoSkip:false,maxRotation:0},grid:{display:false},border:{display:false}},y:{ticks:{color:txt,font:{size:10}},grid:{color:grid},border:{display:false}}}}});
+new Chart('engChart',{type:'bar',data:{labels:['1','2','3','4','5','6','7','8','9','10+'],datasets:[{data:[44,40,28,11,9,14,6,4,2,3],backgroundColor:'#5DCAA5',borderRadius:3}]},options:{...base,scales:{x:{title:{display:true,text:'messages sent',color:txt,font:{size:11}},ticks:{color:txt,font:{size:11}},grid:{display:false},border:{display:false}},y:{title:{display:true,text:'# users',color:txt,font:{size:11}},ticks:{color:txt,font:{size:11}},grid:{color:grid},border:{display:false}}}}});
+
+function toggleExpand(el){el.closest('.expand-row').classList.toggle('open')}
+function toggleConvo(el){el.closest('.convo-row').classList.toggle('open')}
+
+const BUGS=[
+  {type:'bmiss',badge:'Missing content',count:'×15',text:'Bot cannot provide current portfolio value or personalised earnings estimates',excerpts:[
+    {label:'Álvaro 🇪🇸',text:'"Las que ponen -100% rentabilidad y 0 euros de los 1000 invertidos ya son empresas que han quebrado?" → Bot explains the display but can\'t give actual current valuations per deal.'},
+    {label:'Alberto 🇮🇹',text:'"In base ai numeri di Akka investendo idealmente in 30 startup a 500€ a testa, qual è il rendimento atteso?" → Bot gives sector benchmarks but declines to give a personalised projection.'},
+    {label:'Ana 🇪🇸',text:'"Cuál crees que será el primer exit de mi cartera?" → Bot gives general reasoning (Anthropic most advanced) but can\'t confirm exit sequencing.'}
+  ]},
+  {type:'bmiss',badge:'Missing content',count:'×8',text:'No update reports for several portfolio companies (Fintower, Strand, Ryde, Himalaya)',excerpts:[
+    {label:'Francesco 🇮🇹',text:'"Mi è arrivato il report su Fintower, me lo spieghi?" → Bot says it doesn\'t have the Fintower Q1 2026 report in its context, redirects to team.'},
+    {label:'Daniel 🇪🇸',text:'"Cómo va Quixotic, Kokuai y Robinsun?" → Bot has no update documents for these three — only initial deal materials.'}
+  ]},
+  {type:'bwarn',badge:'UX Friction',count:'×6',text:'Lemonway safety questions — bot lacks deposit guarantee content',excerpts:[
+    {label:'Alessandro 🇮🇹',text:'"La banca in cui depositiamo i soldi è Lemonway? In caso di crisi di Lemonway i miei soldi sono al sicuro?" → Bot explains Lemonway is an e-money institution, not a bank, but is vague on deposit protection specifics.'},
+    {label:'Alessandro 🇮🇹',text:'"E se ho soldi investiti, diciamo 3 mila euro, ma 0€ nel wallet, e Lemonway fallisse?" → Bot correctly distinguishes between wallet funds and invested funds, but hedges significantly.'}
+  ]},
+  {type:'bwarn',badge:'UX Friction',count:'×5',text:'Wire transfer bank reference unclear — members don\'t know what to put',excerpts:[
+    {label:'User 🇮🇹',text:'"Che causale mettere sul bonifico per ricaricare il wallet?" → Bot gives a generic instruction but members seem to still be confused — repeated across 5 different users this week.'}
+  ]},
+  {type:'bmiss',badge:'Missing content',count:'×4',text:'Referral programme details incomplete — discount and bonus mechanics unclear',excerpts:[
+    {label:'Francisco 🇪🇸',text:'"Y si no es referido? Se lleva algo? Vale, entonces a ellos les sale la membresía más barata un 10%, y a mi me dan 100€?" → Bot gives partial info but Francisco has to correct the bot on the actual numbers.'},
+    {label:'Francisco 🇪🇸',text:'"Pero si que hay un 30% de descuento en 3 referidos" → User correcting bot — referral tier details not up to date.'}
+  ]},
+  {type:'bwarn',badge:'UX Friction',count:'×3',text:'"Elite circle" membership — no content available',excerpts:[
+    {label:'User 🇪🇸',text:'"Entrar en el círculo de élite" → Bot is not familiar with this tier, redirects to team. Multiple users asked about it this week.'}
+  ]},
+  {type:'berr',badge:'Bug',count:'×2',text:'Bot freezes mid-conversation when calling multiple tools',excerpts:[
+    {label:'User 🇮🇹',text:'"Si è bloccato di nuovo" → Same freezing issue as flagged last week by Gabriele #30847. Still occurring. Escalated to team again but no fix confirmed yet.'}
+  ]},
+];
+
+const bugsEl=document.getElementById('bugs-list');
+BUGS.forEach(b=>{
+  const ex=b.excerpts.map(e=>`<div class="excerpt"><div class="exc-label">${e.label}</div>${e.text}</div>`).join('');
+  bugsEl.innerHTML+=`<div class="expand-row"><div class="expand-header" onclick="toggleExpand(this)"><span class="badge ${b.type}">${b.badge}</span><span class="expand-text">${b.text}</span><span class="expand-count">${b.count}</span><span class="expand-chevron">▾</span></div><div class="expand-body">${ex}</div></div>`;
+});
+
+const CONVOS=[
+  {flag:'🇮🇹',name:'Alessandro',id:'#38142',msgs:14,stars:5,tags:['Lemonway','platform safety'],
+   title:'Deep dive into Lemonway risk — are invested funds protected?',
+   summary:'Alessandro systematically questions what happens to his funds if Lemonway fails — distinguishing between wallet balance and invested amounts. Very thorough, surfaces a content gap the bot struggles with.',
+   thread:[
+     {role:'user',text:'Is the bank where we deposit our money Lemonway?'},
+     {role:'bot',text:'Lemonway is not a bank — it\'s an e-money institution regulated under the French ACPR. It\'s the payment infrastructure that holds wallet funds. It\'s segregated from Akka\'s own accounts.'},
+     {role:'user',text:'So if Lemonway has a crisis, are my funds safe?'},
+     {role:'bot',text:'E-money regulations require Lemonway to hold client funds in segregated accounts at licensed credit institutions — so even if Lemonway fails, those funds should be ring-fenced. But I\'d recommend checking the specific guarantee conditions on Lemonway\'s site.'},
+     {role:'user',text:'And if I have €3,000 invested and €0 in the wallet, and Lemonway failed?'},
+     {role:'bot',text:'Good distinction — funds that are already invested in SPVs are no longer held by Lemonway. They\'re in the SPV structure. So your invested amounts are not exposed to Lemonway insolvency risk. Only your wallet balance would be.'},
+     {role:'user',text:'What about interest on the wallet balance while it sits there?'},
+     {role:'bot',text:'Lemonway does not pay interest on wallet balances — it\'s not a savings account. The money just sits there until you invest.'},
+   ]},
+  {flag:'🇪🇸',name:'Álvaro',id:'#530',msgs:18,stars:5,tags:['portfolio','exits','performance display'],
+   title:'Member confused by -100% display for failed investments',
+   summary:'Álvaro asks about investments showing -100% return and €0 value — he doesn\'t know whether these are failed companies or just a display issue. Very useful signal for portfolio UI clarity.',
+   thread:[
+     {role:'user',text:'When can I get my money back from each company?'},
+     {role:'bot',text:'You\'ll receive proceeds at exit events — IPO, acquisition, or secondary sale. Timelines vary by deal. Bolt is closest to a liquidity event.'},
+     {role:'user',text:'The ones showing -100% return and €0 from my €1,000 — are those companies that have gone bankrupt?'},
+     {role:'bot',text:'Not necessarily. -100% and €0 in the display usually means no valuation update has been loaded yet — the system defaults to the entry value, and when that data is missing, it can show as zero. It doesn\'t mean the company failed.'},
+     {role:'user',text:'How do I know if a company actually went bankrupt?'},
+     {role:'bot',text:'Akka would notify you directly by email for any investment loss. If you haven\'t received such a notification, the company is still operating. The -100% display is a data gap, not a write-off.'},
+     {role:'user',text:'OK. So where do they notify me?'},
+     {role:'bot',text:'Via email to your registered address, and there would typically be a communication in the app as well. I\'d recommend keeping an eye on Akka emails — those would be the primary channel for exit or loss notifications.'},
+   ]},
+  {flag:'🇪🇸',name:'Francisco',id:'#116',msgs:24,stars:5,tags:['referral','membership'],
+   title:'Referral programme mechanics — member corrects the bot on numbers',
+   summary:'Francisco deep-dives into the referral programme and ends up correcting the bot on the actual discount percentages. Clear signal that referral programme details are outdated in the bot\'s knowledge base.',
+   thread:[
+     {role:'user',text:'If someone isn\'t referred, do they still get anything?'},
+     {role:'bot',text:'The referral benefit is specifically for people you invite — they get a discount on their membership, and you receive a cash bonus per successful referral.'},
+     {role:'user',text:'So they get 10% off and I get €100?'},
+     {role:'bot',text:'The exact amounts depend on the current referral terms — I\'d confirm with the team, but that sounds roughly right.'},
+     {role:'user',text:'But there IS a 30% discount for 3 referrals — I know this.'},
+     {role:'bot',text:'You\'re right to flag that — I don\'t have the full tiered referral structure in my knowledge base. If there\'s a 30% discount at 3 referrals, that\'s the correct information.'},
+     {role:'user',text:'Can I refer someone who already has an account?'},
+     {role:'bot',text:'Typically referral bonuses apply to new members only — existing members wouldn\'t qualify. But I\'d confirm this with the team as referral terms can change.'},
+   ]},
+  {flag:'🇬🇧',name:'Thomas',id:'#9915',msgs:15,stars:4,tags:['Fideum','product idea'],
+   title:'What if Akka integrated Fideum directly into the app?',
+   summary:'Thomas (French-speaking EN locale) speculates about whether Akka could use Fideum as a crypto bridge within the app — letting members invest via crypto. Interesting product feedback angle.',
+   thread:[
+     {role:'user',text:'Et si Akka pluggait Fideum sur l\'app, ça me permettrait d\'investir mes crypto sur l\'app Akka ou non?'},
+     {role:'bot',text:'Interesting thought — in theory, if Akka integrated Fideum\'s infrastructure, it could enable crypto-to-fiat conversion for investments. But I don\'t have any information about Akka planning this. It\'s speculative for now.'},
+     {role:'user',text:'Nan mais techniquement, ça me permettrait d\'investir mes crypto sur l\'app Akka ou de garder mes gains en crypto?'},
+     {role:'bot',text:'Technically yes — Fideum handles the conversion and regulatory compliance layer. If Akka used it as a payment rail, you could theoretically fund investments from a crypto wallet. But again, this isn\'t a confirmed product direction.'},
+     {role:'user',text:'How much is Fideum raising?'},
+     {role:'bot',text:'Fideum is raising €15M in a Series A, at a pre-money valuation of €40M — roughly 3.3x their current ARR.'},
+   ]},
+  {flag:'🇪🇸',name:'Jordina',id:'#38320',msgs:11,stars:4,tags:['Fideum','churn risk'],
+   title:'What if a Fideum client bank decides to stop using them?',
+   summary:'Jordina asks a sophisticated question about Fideum\'s customer churn risk — what happens if a bank stops using their service. Bot answers well on the contractual side but lacks specifics on lock-in mechanisms.',
+   thread:[
+     {role:'user',text:'If the bank or company using Fideum decides to stop offering that service because it\'s not profitable, what happens to Fideum\'s revenue?'},
+     {role:'bot',text:'That\'s the key churn risk for Fideum. However, their 3% annual churn rate suggests clients are sticky — the integration cost and regulatory complexity make switching very painful. Once a bank has built Fideum into their compliance stack, leaving is expensive.'},
+     {role:'user',text:'But is there a minimum contract length? Are they locked in?'},
+     {role:'bot',text:'I don\'t have the specific contract terms in my knowledge base. Given the nature of the integration, multi-year contracts would be standard in this space — but I can\'t confirm Fideum\'s specific terms.'},
+     {role:'user',text:'Is Blast Akka?'},
+     {role:'bot',text:'Blast is not Akka — it\'s a separate platform. Are you thinking of a specific deal or feature?'},
+   ]},
+  {flag:'🇮🇹',name:'Alberto',id:'#38710',msgs:11,stars:4,tags:['portfolio strategy','returns'],
+   title:'Statistical return expectations — investing in 30 startups at €500 each',
+   summary:'Alberto asks for a data-driven expected return if he invests systematically in 30 startups at €500 each. Bot gives VC benchmark data but declines personalized projection — user accepts the framing.',
+   thread:[
+     {role:'user',text:'Based on Akka\'s numbers, if I invest ideally in 30 startups at €500 each, what\'s the expected return?'},
+     {role:'bot',text:'I can\'t give you a personalised projection — that would be investment advice. But I can give you the VC industry benchmarks: in a typical early-stage portfolio of 30 deals, the distribution tends to be roughly 50% total loss, 30% return of capital, 15% modest returns (1-3x), and 5% significant wins (10x+). The wins pay for everything else.'},
+     {role:'user',text:'And what\'s the average MOIC Akka targets?'},
+     {role:'bot',text:'Akka doesn\'t publish a target MOIC publicly. The positioning is premium access to deals — returns depend heavily on which deals you enter and at what stage. Some deals in the portfolio are pre-IPO (Bolt, Revolut) which have a different risk/return profile than earlier stage ones.'},
+     {role:'user',text:'How often does Akka provide updates on investments?'},
+     {role:'bot',text:'Typically quarterly for active investments with material to report. Newer investments (under 3 months) may not have updates yet. You\'ll get a notification when reports are published.'},
+   ]},
+  {flag:'🇪🇸',name:'Ana',id:'#6490',msgs:30,stars:3,tags:['portfolio','exits','deal browsing'],
+   title:'High-volume deal browsing session — checking every portfolio company',
+   summary:'Ana goes through multiple deals one by one and asks about exit timing. Very active user but questions are mostly short one-liners ("Otro deal", "Bolt", "SpaceX"). Useful to see what she\'s interested in.',
+   thread:[
+     {role:'user',text:'Quiero profundizar en Fideum. Dime cuál es la etapa de entrada de Akka.'},
+     {role:'bot',text:'Akka is entering Fideum\'s Series A — it\'s a growth-stage investment, not seed. The company already has €12M ARR, is profitable, and has 3% churn. So the risk profile is lower than an early-stage bet, but so is the potential upside multiple.'},
+     {role:'user',text:'Cuál crees que será el primer exit de mi cartera?'},
+     {role:'bot',text:'Based on what\'s publicly known: Anthropic has the most active exit signals (IPO preparation confirmed). After that, Bolt is the most likely near-term liquidity event. But I can\'t predict timing with certainty.'},
+     {role:'user',text:'Otro deal. Bolt.'},
+     {role:'bot',text:'[Switches to Bolt] Bolt is targeting an IPO window — most recent signals point to late 2025 or 2026. The valuation has increased significantly since Akka\'s entry.'},
+     {role:'user',text:'SpaceX.'},
+     {role:'bot',text:'SpaceX is not currently in the Akka portfolio — it\'s not a deal Akka has offered. Are you thinking of a different company, or wondering if it might come up as a future deal?'},
+   ]},
+];
+
+const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+const convoEl=document.getElementById('convo-list');
+CONVOS.forEach(c=>{
+  const thread=c.thread.map(m=>`<div class="msg msg-${m.role}"><div class="msg-role">${m.role==='user'?'Member':'Bot'}</div>${m.text}</div>`).join('');
+  convoEl.innerHTML+=`<div class="convo-row"><div class="convo-header" onclick="toggleConvo(this)"><div class="convo-meta"><span>${c.flag}</span><strong>${c.name}</strong><span style="font-family:monospace;font-size:10px;color:#999">${c.id}</span><span>· ${c.msgs} msgs</span><span class="stars">${stars(c.stars)}</span>${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}<span class="convo-chevron">▾</span></div><div class="convo-title">${c.title}</div><div class="convo-summary">${c.summary}</div></div><div class="convo-body"><div style="font-size:11px;color:#888;margin-bottom:10px">Conversation translated to English · representative excerpts</div><div class="msg-thread">${thread}</div></div></div>`;
+});
+</script>
+</body>
+</html>
